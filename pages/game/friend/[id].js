@@ -6,7 +6,7 @@ import AnimatedBackground from '../../../components/AnimatedBackground'
 import Modal from '../../../components/Modal'
 import { getGame, makeFriendGameMove, finishFriendGame, subscribeToGame } from '../../../lib/supabaseService'
 
-export const runtime = 'edge'
+export const runtime = 'experimental-edge'
 
 export default function FriendGamePage() {
   const router = useRouter()
