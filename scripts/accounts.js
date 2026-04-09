@@ -10,8 +10,8 @@ async function main() {
     console.log(`Account ${i}: ${signer.address}`);
   });
   
-  console.log("\n🚀 Contract deployed from Account 0");
-  console.log("💡 Use any of these accounts in MetaMask for testing");
+  console.log("\nContract deployed from Account 0");
+  console.log("Use any of these accounts in MetaMask for testing");
 }
 
 main()

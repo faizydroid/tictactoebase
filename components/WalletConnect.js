@@ -59,12 +59,11 @@ export default function WalletConnect() {
             </button>
           </div>
 
-          {/* Built on Base Badge */}
+          {/* Footer */}
           <div className="mt-6 text-center">
-            <div className="inline-flex items-center gap-2 compact-card px-4 py-2 bg-blue-50">
-              <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
-              <span className="text-sm font-bold text-gray-700">Built on Base</span>
-            </div>
+            <p className="text-sm text-gray-600">
+              Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+            </p>
           </div>
         </div>
       </div>

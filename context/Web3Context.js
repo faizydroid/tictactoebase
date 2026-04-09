@@ -44,7 +44,7 @@ export const Web3Provider = ({ children }) => {
   const connectWallet = async () => {
     try {
       if (typeof window === 'undefined' || !window.ethereum) {
-        alert('Please install MetaMask!')
+        console.error('Please install MetaMask!')
         return false
       }
 
@@ -117,9 +117,9 @@ export const Web3Provider = ({ children }) => {
               losses: Number(player.losses),
               draws: Number(player.draws || 0)
             }
-            console.log('✅ Loaded blockchain stats:', blockchainStats)
+            console.log('Loaded blockchain stats:', blockchainStats)
           } else {
-            console.log('⚠️ No blockchain data found, using zeros')
+            console.log('No blockchain data found, using zeros')
           }
         } catch (error) {
           console.log('⚠️ Blockchain stats not available:', error.message)
@@ -178,9 +178,9 @@ export const Web3Provider = ({ children }) => {
                 losses: Number(player.losses),
                 draws: Number(player.draws || 0)
               }
-              console.log('✅ Loaded blockchain stats:', blockchainStats)
+              console.log('Loaded blockchain stats:', blockchainStats)
             } else {
-              console.log('⚠️ No blockchain data found, using zeros')
+              console.log('No blockchain data found, using zeros')
             }
           } catch (error) {
             console.log('⚠️ Blockchain stats not available:', error.message)
@@ -329,21 +329,21 @@ export const Web3Provider = ({ children }) => {
 
   const recordGameResult = async (result) => {
     if (!contract) {
-      console.error('❌ No contract available')
+      console.error('No contract available')
       return false
     }
     
     try {
       // result: 0 = loss, 1 = win, 2 = draw
-      console.log('📝 Attempting to record game result:', result === 0 ? 'Loss' : result === 1 ? 'Win' : 'Draw')
-      console.log('📊 Account:', account)
+      console.log('Attempting to record game result:', result === 0 ? 'Loss' : result === 1 ? 'Win' : 'Draw')
+      console.log('Account:', account)
       
       // Check if player is registered on blockchain
       // A registered player will have a non-empty username
       let needsRegistration = false
       try {
         const player = await contract.players(account)
-        console.log('📊 Blockchain player data:', {
+        console.log('Blockchain player data:', {
           username: player.username,
           gamesPlayed: Number(player.gamesPlayed),
           wins: Number(player.wins),
@@ -364,35 +364,35 @@ export const Web3Provider = ({ children }) => {
         if (playerData && playerData.username) {
           try {
             const regTx = await contract.registerPlayer(playerData.username)
-            console.log('📝 Registration transaction sent:', regTx.hash)
+            console.log('Registration transaction sent:', regTx.hash)
             await regTx.wait()
-            console.log('✅ Player registered on blockchain')
+            console.log('Player registered on blockchain')
           } catch (regError) {
-            console.error('❌ Auto-registration failed:', regError)
+            console.error('Auto-registration failed:', regError)
             // If already registered, that's fine, continue
             if (regError.reason && regError.reason.includes('already registered')) {
-              console.log('✅ Player was already registered, continuing...')
+              console.log('Player was already registered, continuing...')
             } else {
-              console.error('❌ Unexpected registration error:', regError.reason || regError.message)
+              console.error('Unexpected registration error:', regError.reason || regError.message)
               // Don't return false, try to record anyway
             }
           }
         } else {
-          console.error('❌ No username available for registration')
+          console.error('No username available for registration')
         }
       } else {
-        console.log('✅ Player already registered on blockchain')
+        console.log('Player already registered on blockchain')
       }
       
       const tx = await contract.recordGameResult(result)
-      console.log('📝 Transaction sent:', tx.hash)
+      console.log('Transaction sent:', tx.hash)
       await tx.wait()
-      console.log('✅ Game result recorded on blockchain')
+      console.log('Game result recorded on blockchain')
       await checkRegistration() // Refresh player data
       return true
     } catch (error) {
-      console.error('❌ Error recording game result:', error)
-      console.error('❌ Error details:', {
+      console.error('Error recording game result:', error)
+      console.error('Error details:', {
         message: error.message,
         reason: error.reason,
         code: error.code
@@ -400,7 +400,7 @@ export const Web3Provider = ({ children }) => {
       
       // Check if it's a "not registered" error
       if (error.reason && error.reason.includes('Player not registered')) {
-        console.error('❌ Player not registered on blockchain contract')
+        console.error('Player not registered on blockchain contract')
       }
       
       return false

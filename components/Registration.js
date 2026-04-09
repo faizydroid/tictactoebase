@@ -2,14 +2,14 @@ import { useState, useEffect } from 'react'
 import { useWeb3 } from '../context/Web3Context'
 import { createOrUpdatePlayer, checkUsernameAvailable, getPlayer } from '../lib/supabaseService'
 import AnimatedBackground from './AnimatedBackground'
-import Toast from './Toast'
+import Modal from './Modal'
 
 export default function Registration() {
   const [username, setUsername] = useState('')
   const [loading, setLoading] = useState(false)
   const [existingUsername, setExistingUsername] = useState(null)
   const [checkingExisting, setCheckingExisting] = useState(true)
-  const [toast, setToast] = useState({ show: false, message: '', type: 'error' })
+  const [modal, setModal] = useState({ show: false, message: '', type: 'error', title: '' })
   const { registerPlayer, disconnectWallet, account } = useWeb3()
 
   // Check if user already has a username in Supabase
@@ -33,8 +33,8 @@ export default function Registration() {
     checkExistingUsername()
   }, [account])
 
-  const showToast = (message, type = 'error') => {
-    setToast({ show: true, message, type })
+  const showModal = (message, type = 'error', title = '') => {
+    setModal({ show: true, message, type, title })
   }
 
   const handleSubmit = async (e) => {
@@ -50,7 +50,7 @@ export default function Registration() {
         const { available } = await checkUsernameAvailable(username.trim())
         
         if (!available) {
-          showToast('Username is already taken. Please choose another.', 'warning')
+          showModal('Username is already taken. Please choose another.', 'warning', 'Username Taken')
           setLoading(false)
           return
         }
@@ -61,24 +61,24 @@ export default function Registration() {
         await registerPlayer(username.trim())
         // Save username to Supabase
         await createOrUpdatePlayer(account, username.trim())
-        showToast('Registration successful! 🎉', 'success')
+        showModal('Your account has been successfully registered!', 'success', 'Registration Complete')
       } catch (regError) {
         // Handle specific blockchain errors
         if (regError.code === 'ACTION_REJECTED' || regError.message.includes('user rejected')) {
-          showToast('Transaction was rejected. Please approve the transaction to register.', 'warning')
+          showModal('Transaction was rejected. Please approve the transaction to register.', 'warning', 'Transaction Rejected')
         } else if (regError.message.includes('insufficient funds')) {
-          showToast('Insufficient funds for gas fees. Please add ETH to your wallet.', 'error')
+          showModal('Insufficient funds for gas fees. Please add ETH to your wallet.', 'error', 'Insufficient Funds')
         } else if (regError.message.includes('already registered')) {
-          showToast('This wallet is already registered. Please use a different wallet.', 'error')
+          showModal('This wallet is already registered. Please use a different wallet.', 'error', 'Already Registered')
         } else if (regError.message.includes('Username taken')) {
-          showToast('This username is already taken on the blockchain. Please choose another.', 'warning')
+          showModal('This username is already taken on the blockchain. Please choose another.', 'warning', 'Username Taken')
         } else {
-          showToast(`Registration failed: ${regError.reason || regError.message}`, 'error')
+          showModal(`Registration failed: ${regError.reason || regError.message}`, 'error', 'Registration Failed')
         }
       }
     } catch (error) {
       console.error('Registration error:', error)
-      showToast(`Unexpected error: ${error.message}`, 'error')
+      showModal(`Unexpected error: ${error.message}`, 'error', 'Error')
     }
     
     setLoading(false)
@@ -137,7 +137,7 @@ export default function Registration() {
                     <div className="text-xs text-gray-800 flex-1">
                       <p className="font-black mb-1.5 text-sm">Contract was redeployed</p>
                       <p className="font-medium mb-2">Your username exists in our database but needs to be registered on the new smart contract.</p>
-                      <p className="font-bold text-blue-700">✓ Username: "{existingUsername}"</p>
+                      <p className="font-bold text-blue-700">Username: "{existingUsername}"</p>
                       <p className="font-medium mt-2 text-gray-600">Click below to register it on the new contract (one-time blockchain transaction).</p>
                     </div>
                   </div>
@@ -224,12 +224,20 @@ export default function Registration() {
         </div>
       </div>
 
-      {/* Toast Notification */}
-      <Toast
-        message={toast.message}
-        type={toast.type}
-        isVisible={toast.show}
-        onClose={() => setToast({ ...toast, show: false })}
+      {/* Footer */}
+      <div className="relative z-10 py-4 text-center">
+        <p className="text-sm text-gray-600">
+          Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+        </p>
+      </div>
+
+      {/* Modal Notification */}
+      <Modal
+        isOpen={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
       />
     </div>
   )

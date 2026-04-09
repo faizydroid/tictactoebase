@@ -236,15 +236,15 @@ export default function AIGamePage() {
           {/* Compact Stats Pills */}
           <div className="flex gap-1.5">
             <div className="stat-pill bg-green-100 text-green-700">
-              <span className="text-xs">✓</span>
+              <span className="text-xs">W</span>
               <span>{playerWins}</span>
             </div>
             <div className="stat-pill bg-yellow-100 text-yellow-700">
-              <span className="text-xs">=</span>
+              <span className="text-xs">D</span>
               <span>{draws}</span>
             </div>
             <div className="stat-pill bg-red-100 text-red-700">
-              <span className="text-xs">✗</span>
+              <span className="text-xs">L</span>
               <span>{aiWins}</span>
             </div>
           </div>
@@ -287,19 +287,16 @@ export default function AIGamePage() {
                 {gameResult.type === 'win' && (
                   <div>
                     <div className="text-4xl font-black gradient-text mb-2">YOU WIN!</div>
-                    <div className="text-2xl mb-2">🎉</div>
                   </div>
                 )}
                 {gameResult.type === 'lose' && (
                   <div>
                     <div className="text-4xl font-black text-purple-700 mb-2">YOU LOSE</div>
-                    <div className="text-2xl mb-2">😔</div>
                   </div>
                 )}
                 {gameResult.type === 'draw' && (
                   <div>
                     <div className="text-4xl font-black text-yellow-700 mb-2">IT'S A DRAW!</div>
-                    <div className="text-2xl mb-2">🤝</div>
                   </div>
                 )}
               </div>
@@ -320,7 +317,6 @@ export default function AIGamePage() {
                   {transactionStatus === 'confirmed' && (
                     <div className="transaction-confirmed text-sm text-green-600 font-bold flex items-center justify-center gap-2">
                       <span>Transaction Confirmed</span>
-                      <span className="text-lg">✅</span>
                     </div>
                   )}
                   {transactionStatus === null && (
@@ -344,6 +340,13 @@ export default function AIGamePage() {
           </div>
         </>
       )}
+
+      {/* Footer */}
+      <div className="relative z-10 py-4 text-center">
+        <p className="text-sm text-gray-600">
+          Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+        </p>
+      </div>
     </div>
   )
 }

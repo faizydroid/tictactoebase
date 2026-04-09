@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useWeb3 } from '../../context/Web3Context'
 import GameBoard from '../../components/GameBoard'
 import AnimatedBackground from '../../components/AnimatedBackground'
+import Modal from '../../components/Modal'
 
 export default function GamePage() {
   const router = useRouter()
@@ -16,6 +17,7 @@ export default function GamePage() {
   const [showResultScreen, setShowResultScreen] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState(null)
   const [gameKey, setGameKey] = useState(0)
+  const [modal, setModal] = useState({ show: false, message: '', type: 'error', title: '' })
 
   useEffect(() => {
     if (id && account) {
@@ -118,7 +120,7 @@ export default function GamePage() {
       }
     } catch (error) {
       console.error('Error making move:', error)
-      alert('Failed to make move. Please try again.')
+      setModal({ show: true, message: 'Failed to make move. Please try again.', type: 'error', title: 'Error' })
     }
     setMakingMove(false)
   }
@@ -281,13 +283,11 @@ export default function GamePage() {
                 {gameResult.type === 'win' && (
                   <div>
                     <div className="text-4xl font-black gradient-text mb-2">YOU WIN!</div>
-                    <div className="text-2xl mb-2">🎉</div>
                   </div>
                 )}
                 {gameResult.type === 'lose' && (
                   <div>
                     <div className="text-4xl font-black text-purple-700 mb-2">YOU LOSE</div>
-                    <div className="text-2xl mb-2">😔</div>
                   </div>
                 )}
                 {gameResult.type === 'draw' && (
@@ -313,7 +313,6 @@ export default function GamePage() {
                 {transactionStatus === 'confirmed' && (
                   <div className="transaction-confirmed text-sm text-green-600 font-bold flex items-center justify-center gap-2">
                     <span>Transaction Confirmed</span>
-                    <span className="text-lg">✅</span>
                   </div>
                 )}
                 {transactionStatus === null && (
@@ -336,6 +335,22 @@ export default function GamePage() {
           </div>
         </>
       )}
+
+      {/* Footer */}
+      <div className="relative z-10 py-4 text-center">
+        <p className="text-sm text-gray-600">
+          Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+        </p>
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
     </div>
   )
 }

@@ -55,7 +55,7 @@ export default function GameCodeModal({ isOpen, onClose, gameCode }) {
   }
 
   const handleShare = async () => {
-    const shareText = `🎮 Join my Tic Tac Toe game!\n\nGame Code: ${gameCode}\n\nEnter this code in the app to play!`
+    const shareText = `Join my Tic Tac Toe game!\n\nGame Code: ${gameCode}\n\nEnter this code in the app to play!`
     
     if (navigator.share) {
       try {
@@ -96,7 +96,6 @@ export default function GameCodeModal({ isOpen, onClose, gameCode }) {
           {/* Header */}
           <div className="bg-gradient-to-r from-green-400 to-emerald-500 p-6 rounded-t-xl border-b-4 border-black">
             <div className="text-center">
-              <div className="text-5xl mb-3">🎮</div>
               <h2 className="text-2xl font-black text-white mb-1">Game Created!</h2>
               <p className="text-white/90 text-sm font-bold">Share this code with your friend</p>
             </div>

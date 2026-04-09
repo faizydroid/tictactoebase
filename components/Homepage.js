@@ -4,11 +4,13 @@ import Leaderboard from './Leaderboard'
 import GameLobby from './GameLobby'
 import AnimatedBackground from './AnimatedBackground'
 import Image from 'next/image'
+import Modal from './Modal'
 
 export default function Homepage() {
   const { playerData, account, disconnectWallet } = useWeb3()
   const [activeTab, setActiveTab] = useState('play')
   const [showDropdown, setShowDropdown] = useState(false)
+  const [modal, setModal] = useState({ show: false, message: '', type: 'info', title: '' })
 
   const winRate = playerData?.gamesPlayed > 0 
     ? ((playerData.wins / playerData.gamesPlayed) * 100).toFixed(0) 
@@ -72,7 +74,7 @@ export default function Homepage() {
                         <button
                           onClick={() => {
                             navigator.clipboard.writeText(account)
-                            alert('Address copied!')
+                            setModal({ show: true, message: 'Wallet address copied to clipboard!', type: 'success', title: 'Copied!' })
                           }}
                           className="text-gray-600 hover:text-black"
                         >
@@ -175,6 +177,22 @@ export default function Homepage() {
           )}
         </div>
       </div>
+
+      {/* Footer */}
+      <div className="relative z-10 py-4 text-center">
+        <p className="text-sm text-gray-600">
+          Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+        </p>
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
     </div>
   )
 }

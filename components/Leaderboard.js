@@ -62,7 +62,6 @@ export default function Leaderboard() {
       {/* Header */}
       <div className="flex justify-between items-center mb-3">
         <div className="flex items-center gap-2">
-          <span className="text-2xl">🏆</span>
           <h3 className="text-lg font-black">Top Players</h3>
         </div>
         <button
@@ -151,7 +150,7 @@ export default function Leaderboard() {
       {leaderboard.length > 0 && (
         <div className="mt-3 p-3 bg-gradient-to-r from-yellow-100 to-orange-100 rounded-lg border-2 border-yellow-300">
           <p className="text-xs text-center font-bold text-gray-700">
-            🎮 Keep playing to climb the ranks!
+            Keep playing to climb the ranks!
           </p>
         </div>
       )}

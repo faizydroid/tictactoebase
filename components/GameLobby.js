@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useRouter } from 'next/router'
 import { useWeb3 } from '../context/Web3Context'
 import GameCodeModal from './GameCodeModal'
+import Modal from './Modal'
 
 export default function GameLobby() {
   const router = useRouter()
@@ -17,6 +18,7 @@ export default function GameLobby() {
   const [opponent, setOpponent] = useState(null)
   const [countdown, setCountdown] = useState(5)
   const [matchedGameId, setMatchedGameId] = useState(null)
+  const [modal, setModal] = useState({ show: false, message: '', type: 'error', title: '' })
 
   const handlePlayWithFriend = () => {
     setGameMode('friend')
@@ -47,11 +49,11 @@ export default function GameLobby() {
         // Store game ID for later navigation
         window.friendGameId = result.data.id
       } else {
-        alert('Failed to create game. Please try again.')
+        setModal({ show: true, message: 'Failed to create game. Please try again.', type: 'error', title: 'Error' })
       }
     } catch (error) {
       console.error('Error creating game:', error)
-      alert('Error creating game: ' + error.message)
+      setModal({ show: true, message: `Error creating game: ${error.message}`, type: 'error', title: 'Error' })
     }
     setCreating(false)
   }
@@ -67,18 +69,18 @@ export default function GameLobby() {
       const joinResult = await joinMatchmakingQueue(account, playerData?.username || 'Player')
       
       if (!joinResult.success) {
-        alert('Failed to join matchmaking queue. Please try again.')
+        setModal({ show: true, message: 'Failed to join matchmaking queue. Please try again.', type: 'error', title: 'Error' })
         setSearching(false)
         setGameMode(null)
         return
       }
       
-      console.log('✅ Joined queue, looking for match...')
+      console.log('Joined queue, looking for match...')
       
       // Subscribe to updates FIRST (before trying to find match)
       let pollInterval
       const channel = subscribeToMatchmaking(account, async (queueData) => {
-        console.log('🎉 Match found via subscription!', queueData)
+        console.log('Match found via subscription!', queueData)
         
         if (queueData.status === 'matched' && queueData.match_id) {
           // Clear polling
@@ -110,7 +112,7 @@ export default function GameLobby() {
       
       if (matchResult.success && matchResult.matched) {
         // Match found immediately!
-        console.log('🎉 Instant match found!')
+        console.log('Instant match found!')
         if (pollInterval) clearInterval(pollInterval)
         channel.unsubscribe()
         await handleMatchFound(matchResult.opponent, matchResult.gameId)
@@ -156,7 +158,7 @@ export default function GameLobby() {
       
     } catch (error) {
       console.error('Error in matchmaking:', error)
-      alert('Error finding opponent. Please try again.')
+      setModal({ show: true, message: 'Error finding opponent. Please try again.', type: 'error', title: 'Error' })
       setSearching(false)
       setGameMode(null)
     }
@@ -226,11 +228,11 @@ export default function GameLobby() {
         // Navigate to game
         router.push(`/game/friend/${result.data.id}`)
       } else {
-        alert(result.error || 'Failed to join game. Please check the code and try again.')
+        setModal({ show: true, message: result.error || 'Failed to join game. Please check the code and try again.', type: 'error', title: 'Failed to Join' })
       }
     } catch (error) {
       console.error('Error joining game:', error)
-      alert('Error joining game: ' + error.message)
+      setModal({ show: true, message: `Error joining game: ${error.message}`, type: 'error', title: 'Error' })
     }
     setCreating(false)
   }
@@ -309,7 +311,7 @@ export default function GameLobby() {
                   <div className="text-sm font-black">Create Game</div>
                   <div className="text-xs text-gray-600">Get a code to share</div>
                 </div>
-                <div className="text-2xl">➕</div>
+                <div className="text-2xl">+</div>
               </div>
             </button>
 
@@ -323,7 +325,7 @@ export default function GameLobby() {
                   <div className="text-sm font-black">Join Game</div>
                   <div className="text-xs text-gray-600">Enter friend's code</div>
                 </div>
-                <div className="text-2xl">🔗</div>
+                <div className="text-2xl">#</div>
               </div>
             </button>
           </div>
@@ -345,12 +347,12 @@ export default function GameLobby() {
               disabled={creating}
               className="w-full btn-success disabled:opacity-50"
             >
-              {creating ? 'Creating...' : '🎮 Generate Game Code'}
+              {creating ? 'Creating...' : 'Generate Game Code'}
             </button>
             
             <div className="mt-3 p-2 bg-blue-50 rounded-lg border-2 border-blue-200">
               <p className="text-xs text-gray-700 text-center">
-                💡 Your friend can join using the code
+                Your friend can join using the code
               </p>
             </div>
           </div>
@@ -434,49 +436,70 @@ export default function GameLobby() {
       <>
         <div className="fixed inset-0 bg-black bg-opacity-50 z-40"></div>
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="w-full max-w-md bg-gradient-to-br from-blue-600 to-purple-700 rounded-3xl p-8 text-center relative overflow-hidden shadow-2xl">
-            {/* Diagonal Yellow Stripe */}
-            <div className="absolute top-0 left-0 w-full h-full">
-              <div className="absolute top-1/2 left-1/2 w-[150%] h-24 bg-yellow-400 transform -translate-x-1/2 -translate-y-1/2 rotate-12"></div>
-            </div>
-
-            {/* Content */}
-            <div className="relative z-10">
-              {/* Title */}
-              <div className="mb-8">
-                <div className="text-2xl font-black text-black mb-2">found</div>
-                <div className="text-5xl font-black text-white tracking-wider">match</div>
-              </div>
-
-              {/* Player 1 */}
-              <div className="mb-4">
-                <div className="text-4xl font-black text-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+          <div className="w-full max-w-lg relative">
+            {/* Background Image Container */}
+            <div className="relative w-full" style={{ paddingBottom: '100%' }}>
+              {/* Background Image */}
+              <img 
+                src="/random_bg.png" 
+                alt="VS" 
+                className="absolute inset-0 w-full h-full object-contain"
+              />
+              
+              {/* Player 1 Name (Top Left - Blue Side) */}
+              <div className="absolute" style={{ 
+                top: '22%', 
+                left: '20%',
+                maxWidth: '35%'
+              }}>
+                <div 
+                  className="text-2xl sm:text-3xl md:text-4xl font-black text-black break-words" 
+                  style={{ 
+                    fontFamily: 'Arial Black, sans-serif',
+                    textShadow: '2px 2px 4px rgba(255,255,255,0.7)',
+                    lineHeight: '1.2',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word'
+                  }}
+                >
                   {playerData?.username || 'You'}
                 </div>
               </div>
 
-              {/* VS */}
-              <div className="my-6 relative">
-                <div className="text-7xl font-black text-white" style={{ 
-                  fontFamily: 'Comic Sans MS, cursive',
-                  textShadow: '4px 4px 0px rgba(0,0,0,0.3)'
-                }}>
-                  VS
-                </div>
-              </div>
-
-              {/* Player 2 */}
-              <div className="mb-8">
-                <div className="text-4xl font-black text-white" style={{ fontFamily: 'Comic Sans MS, cursive' }}>
+              {/* Player 2 Name (Bottom Right - Red Side) */}
+              <div className="absolute" style={{ 
+                bottom: '22%', 
+                right: '20%',
+                maxWidth: '35%',
+                textAlign: 'right'
+              }}>
+                <div 
+                  className="text-2xl sm:text-3xl md:text-4xl font-black text-black break-words" 
+                  style={{ 
+                    fontFamily: 'Arial Black, sans-serif',
+                    textShadow: '2px 2px 4px rgba(255,255,255,0.7)',
+                    lineHeight: '1.2',
+                    wordWrap: 'break-word',
+                    overflowWrap: 'break-word'
+                  }}
+                >
                   {opponent.username}
                 </div>
               </div>
 
-              {/* Countdown */}
-              <div className="mt-8">
-                <div className="text-sm font-bold text-white mb-2">Starting game in</div>
-                <div className="text-6xl font-black text-yellow-400 animate-pulse">
-                  {countdown}
+              {/* Countdown Overlay */}
+              <div className="absolute bottom-4 left-1/2 transform -translate-x-1/2">
+                <div className="text-center bg-black bg-opacity-50 rounded-full px-6 py-3">
+                  <div className="text-xs font-bold text-white mb-1" style={{
+                    textShadow: '1px 1px 2px rgba(0,0,0,0.8)'
+                  }}>
+                    Starting in
+                  </div>
+                  <div className="text-5xl font-black text-yellow-400 animate-pulse" style={{
+                    textShadow: '2px 2px 4px rgba(0,0,0,0.8)'
+                  }}>
+                    {countdown}
+                  </div>
                 </div>
               </div>
             </div>
@@ -484,6 +507,15 @@ export default function GameLobby() {
         </div>
       </>
     )}
+
+    {/* Modal */}
+    <Modal
+      isOpen={modal.show}
+      onClose={() => setModal({ ...modal, show: false })}
+      title={modal.title}
+      message={modal.message}
+      type={modal.type}
+    />
     </>
   )
 }

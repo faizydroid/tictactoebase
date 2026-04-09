@@ -3,6 +3,7 @@ import { useRouter } from 'next/router'
 import { useWeb3 } from '../../../context/Web3Context'
 import GameBoard from '../../../components/GameBoard'
 import AnimatedBackground from '../../../components/AnimatedBackground'
+import Modal from '../../../components/Modal'
 import { getGame, makeFriendGameMove, finishFriendGame, subscribeToGame } from '../../../lib/supabaseService'
 
 export default function FriendGamePage() {
@@ -18,7 +19,9 @@ export default function FriendGamePage() {
   const [showResultScreen, setShowResultScreen] = useState(false)
   const [transactionStatus, setTransactionStatus] = useState(null)
   const [gameKey, setGameKey] = useState(0)
+  const [modal, setModal] = useState({ show: false, message: '', type: 'error', title: '' })
   const [isPolling, setIsPolling] = useState(false)
+  const [opponentLeft, setOpponentLeft] = useState(false)
   
   const channelRef = useRef(null)
   const pollIntervalRef = useRef(null)
@@ -31,12 +34,18 @@ export default function FriendGamePage() {
 
     // Subscribe to real-time updates
     const channel = subscribeToGame(id, (updatedGame) => {
-      console.log('🔄 Real-time update received:', updatedGame)
+      console.log('Real-time update received:', updatedGame)
       setGame(updatedGame)
+      
+      // Check if game was abandoned
+      if (updatedGame.status === 'abandoned' && !opponentLeft) {
+        setOpponentLeft(true)
+        return
+      }
       
       // Stop polling if it's running
       if (pollIntervalRef.current && updatedGame.status !== 'waiting') {
-        console.log('✅ Game started via real-time! Stopping polling.')
+        console.log('Game started via real-time! Stopping polling.')
         clearInterval(pollIntervalRef.current)
         pollIntervalRef.current = null
         setIsPolling(false)
@@ -67,11 +76,11 @@ export default function FriendGamePage() {
       setIsPolling(true)
       
       pollIntervalRef.current = setInterval(async () => {
-        console.log('🔄 Polling for game updates...')
+        console.log('Polling for game updates...')
         const result = await getGame(id)
         if (result.success) {
           if (result.data.status !== 'waiting') {
-            console.log('✅ Game started via polling! Stopping polling.')
+            console.log('Game started via polling! Stopping polling.')
             setGame(result.data)
             clearInterval(pollIntervalRef.current)
             pollIntervalRef.current = null
@@ -178,18 +187,18 @@ export default function FriendGamePage() {
           }, 1200)
         }
       } else {
-        alert(result.error || 'Failed to make move')
+        setModal({ show: true, message: result.error || 'Failed to make move', type: 'error', title: 'Error' })
       }
     } catch (error) {
       console.error('Error making move:', error)
-      alert('Error making move')
+      setModal({ show: true, message: 'Error making move', type: 'error', title: 'Error' })
     }
 
     setMakingMove(false)
   }
 
   const handleGameFinished = (finishedGame) => {
-    console.log('🎮 Game finished, handling result...')
+    console.log('Game finished, handling result...')
     
     // Determine result type
     let resultType = 'draw'
@@ -206,7 +215,7 @@ export default function FriendGamePage() {
       resultCode = 0
     }
 
-    console.log('🎮 Result type:', resultType, 'Result code:', resultCode)
+    console.log('Result type:', resultType, 'Result code:', resultCode)
 
     setGameResult({ type: resultType })
     
@@ -224,24 +233,24 @@ export default function FriendGamePage() {
   }
 
   const recordTransaction = async (result) => {
-    console.log('🎮 Recording transaction for result:', result === 0 ? 'Loss' : result === 1 ? 'Win' : 'Draw')
-    console.log('📊 Contract available:', !!contract)
-    console.log('📊 Player data:', playerData)
-    console.log('📊 Account:', account)
+    console.log('Recording transaction for result:', result === 0 ? 'Loss' : result === 1 ? 'Win' : 'Draw')
+    console.log('Contract available:', !!contract)
+    console.log('Player data:', playerData)
+    console.log('Account:', account)
     
     setTransactionStatus('pending')
     try {
       // result: 0 = loss, 1 = win, 2 = draw
       const success = await recordGameResult(result)
-      console.log('📊 Record result:', success)
+      console.log('Record result:', success)
       if (success) {
         setTransactionStatus('confirmed')
       } else {
-        console.error('❌ recordGameResult returned false')
+        console.error('recordGameResult returned false')
         setTransactionStatus(null)
       }
     } catch (error) {
-      console.error('❌ Error recording game result:', error)
+      console.error('Error recording game result:', error)
       setTransactionStatus(null)
     }
   }
@@ -251,6 +260,11 @@ export default function FriendGamePage() {
   }
 
   const handleQuit = () => {
+    // Mark game as abandoned when quitting
+    if (game && game.status === 'in_progress') {
+      const { abandonGame } = require('../../../lib/supabaseService')
+      abandonGame(id)
+    }
     router.push('/')
   }
 
@@ -285,7 +299,7 @@ export default function FriendGamePage() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative">
         <AnimatedBackground />
         <div className="compact-card text-center max-w-md relative z-10 p-8">
-          <div className="text-6xl mb-4">🔍</div>
+          <div className="text-6xl mb-4 font-black">?</div>
           <h2 className="text-2xl font-black mb-3 gradient-text">Game Not Found</h2>
           <p className="text-gray-600 text-sm mb-6">
             This game doesn't exist or has already started. Please check the game code and try again.
@@ -308,7 +322,7 @@ export default function FriendGamePage() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative">
         <AnimatedBackground />
         <div className="compact-card text-center max-w-md relative z-10 p-8">
-          <div className="text-6xl mb-4">⚠️</div>
+          <div className="text-6xl mb-4 font-black">!</div>
           <h2 className="text-2xl font-black mb-3 text-red-600">Error Loading Game</h2>
           <p className="text-gray-600 text-sm mb-6">
             Something went wrong while loading the game. Please try again.
@@ -331,7 +345,7 @@ export default function FriendGamePage() {
       <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-purple-50 via-pink-50 to-blue-50 relative">
         <AnimatedBackground />
         <div className="compact-card text-center max-w-md relative z-10 p-8">
-          <div className="text-6xl mb-4">❓</div>
+          <div className="text-6xl mb-4 font-black">?</div>
           <h2 className="text-2xl font-black mb-3">No Game Data</h2>
           <p className="text-gray-600 text-sm mb-6">Unable to load game information.</p>
           <button onClick={() => router.push('/')} className="btn-primary w-full">
@@ -365,7 +379,7 @@ export default function FriendGamePage() {
         {/* Waiting for Opponent */}
         {isWaiting && (
           <div className="mb-3 compact-card bg-yellow-50 text-center p-4">
-            <div className="text-2xl mb-2">⏳</div>
+            <div className="text-2xl mb-2 font-black">WAITING</div>
             <div className="text-lg font-black mb-1">Waiting for Opponent</div>
             <p className="text-xs text-gray-600 mb-3">Share code: <span className="font-mono font-black">{game.game_code}</span></p>
             <div className="flex items-center justify-center gap-1">
@@ -446,19 +460,16 @@ export default function FriendGamePage() {
                 {gameResult.type === 'win' && (
                   <div>
                     <div className="text-4xl font-black gradient-text mb-2">YOU WIN!</div>
-                    <div className="text-2xl mb-2">🎉</div>
                   </div>
                 )}
                 {gameResult.type === 'lose' && (
                   <div>
                     <div className="text-4xl font-black text-purple-700 mb-2">YOU LOSE</div>
-                    <div className="text-2xl mb-2">😔</div>
                   </div>
                 )}
                 {gameResult.type === 'draw' && (
                   <div>
                     <div className="text-4xl font-black text-yellow-700 mb-2">IT'S A DRAW!</div>
-                    <div className="text-2xl mb-2">🤝</div>
                   </div>
                 )}
               </div>
@@ -478,7 +489,6 @@ export default function FriendGamePage() {
                 {transactionStatus === 'confirmed' && (
                   <div className="transaction-confirmed text-sm text-green-600 font-bold flex items-center justify-center gap-2">
                     <span>Transaction Confirmed</span>
-                    <span className="text-lg">✅</span>
                   </div>
                 )}
                 {transactionStatus === null && (
@@ -501,10 +511,47 @@ export default function FriendGamePage() {
           </div>
         </>
       )}
+
+      {/* Opponent Left Popup */}
+      {opponentLeft && (
+        <>
+          <div className="fixed inset-0 bg-black bg-opacity-70 z-50"></div>
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+            <div className="compact-card max-w-sm w-full p-8 text-center bg-white relative z-10">
+              <div className="text-6xl mb-4 font-black">X</div>
+              <h2 className="text-2xl font-black mb-3 text-gray-900">Opponent Left</h2>
+              <p className="text-gray-600 text-sm mb-6">
+                Your opponent has left the game.
+              </p>
+              <button
+                onClick={() => router.push('/')}
+                className="btn-primary w-full py-3"
+              >
+                Go Home
+              </button>
+            </div>
+          </div>
+        </>
+      )}
+
+      {/* Footer */}
+      <div className="relative z-10 py-4 text-center">
+        <p className="text-sm text-gray-600">
+          Built on <a href="https://base.org" target="_blank" rel="noopener noreferrer" className="text-blue-600 font-bold hover:text-blue-700">Base</a> by <a href="https://x.com/faizydroid" target="_blank" rel="noopener noreferrer" className="text-gray-800 font-bold hover:text-gray-900">Faizydroid</a>
+        </p>
+      </div>
+
+      {/* Modal */}
+      <Modal
+        isOpen={modal.show}
+        onClose={() => setModal({ ...modal, show: false })}
+        title={modal.title}
+        message={modal.message}
+        type={modal.type}
+      />
     </div>
   )
 }
-
 
 // Force server-side rendering to ensure environment variables are available
 export async function getServerSideProps() {
