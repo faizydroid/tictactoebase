@@ -504,3 +504,11 @@ export default function FriendGamePage() {
     </div>
   )
 }
+
+
+// Force server-side rendering to ensure environment variables are available
+export async function getServerSideProps() {
+  return {
+    props: {},
+  }
+}
