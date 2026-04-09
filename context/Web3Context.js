@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, useEffect } from 'react'
 import { ethers } from 'ethers'
-import TicTacToeABI from '../contracts/TicTacToe.json'
+import TicTacToeABI from '../abi/TicTacToe.json'
 
 const Web3Context = createContext()
 
